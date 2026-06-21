@@ -101,34 +101,6 @@
       white-space: nowrap;
     }
 
-    .update-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 36px;
-      border: 0;
-      border-radius: 999px;
-      padding: 8px 14px;
-      background: var(--deep);
-      color: #fff;
-      font-size: .9rem;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .update-btn svg {
-      width: 16px;
-      height: 16px;
-    }
-
-    .update-status {
-      flex-basis: 100%;
-      color: var(--muted);
-      font-size: .88rem;
-      line-height: 1.4;
-    }
-
     .miku-card {
       overflow: hidden;
       border: 1px solid rgba(23, 33, 27, .12);
@@ -579,19 +551,67 @@
         margin-top: 12px;
       }
 
-      .stamp,
-      .update-btn {
+      .stamp {
         width: 100%;
         justify-content: center;
       }
 
+      .miku-card {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr);
+        align-items: center;
+      }
+
       .miku-card img {
-        display: none;
+        display: block;
+        width: 72px;
+        height: 72px;
+        aspect-ratio: auto;
+        object-fit: cover;
+        object-position: 50% 56%;
       }
 
       .miku-card figcaption {
         padding: 12px 14px;
         font-size: .95rem;
+      }
+
+      .result {
+        gap: 12px;
+        padding: 14px;
+      }
+
+      .bin-visual {
+        min-height: 112px;
+      }
+
+      .bin {
+        width: 72px;
+        height: 98px;
+        border-radius: 7px 7px 10px 10px;
+      }
+
+      .bin::before {
+        left: -7px;
+        top: -18px;
+        width: 86px;
+        height: 20px;
+        border-radius: 6px 6px 3px 3px;
+      }
+
+      .bin::after {
+        left: 22px;
+        top: -28px;
+        width: 28px;
+        height: 12px;
+        border-width: 4px;
+        border-bottom: 0;
+      }
+
+      .bin svg {
+        inset: 26px 0 auto;
+        width: 34px;
+        height: 34px;
       }
 
       .search-row,
@@ -616,11 +636,6 @@
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm0 16H5V9h14v10Z"/></svg>
             Reeglid kontrollitud 21.06.2026
           </div>
-          <button id="refreshBtn" class="update-btn" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.7 6.3A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.76-4.24L13 11h8V3l-3.3 3.3Z"/></svg>
-            Uuenda alusinfot
-          </button>
-          <div id="updateStatus" class="update-status" role="status"></div>
         </div>
       </div>
       <figure class="miku-card">
@@ -825,8 +840,6 @@
 
     const input = document.querySelector("#query");
     const button = document.querySelector("#sortBtn");
-    const refreshBtn = document.querySelector("#refreshBtn");
-    const updateStatus = document.querySelector("#updateStatus");
     const suggestionsEl = document.querySelector("#suggestions");
     const categoryEl = document.querySelector("#category");
     const confidenceEl = document.querySelector("#confidence");
@@ -837,14 +850,6 @@
     const binEl = document.querySelector("#bin");
     const binIcon = document.querySelector("#binIcon");
     let activeSuggestionIndex = -1;
-
-    const sourceManifest = [
-      { name: "Eesti Pakendiringlus", url: "https://pakendiringlus.ee/teenused/eraisikule/sorteerimisjuhend/" },
-      { name: "TVO", url: "https://tvo.ee/kkk/miks-plastmassambrit-ei-tohi-panna-pakendikonteinerisse" },
-      { name: "Kliimaministeerium", url: "https://kliimaministeerium.ee/jaatmete-liigiti-kogumine/koogi-ja-sooklajaatmed" },
-      { name: "Ragn-Sells", url: "https://www.ragnsells.ee/klienditugi/materjalid/sorteerimisjuhendid/" },
-      { name: "that.ee/trash", url: "https://that.ee/trash/" }
-    ];
 
     function normalize(value) {
       return value.toLocaleLowerCase("et-EE").trim().replace(/\s+/g, " ");
@@ -1001,35 +1006,6 @@
       if (suggestion) {
         chooseSuggestion(suggestion.dataset.suggestion);
       }
-    });
-
-    async function pingSource(source) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 6000);
-      try {
-        await fetch(source.url, {
-          mode: "no-cors",
-          cache: "reload",
-          signal: controller.signal
-        });
-        return { source, ok: true };
-      } catch (error) {
-        return { source, ok: false };
-      } finally {
-        clearTimeout(timeout);
-      }
-    }
-
-    refreshBtn.addEventListener("click", async () => {
-      refreshBtn.disabled = true;
-      updateStatus.textContent = "Kontrollin allikaid: " + sourceManifest.map(source => source.name).join(", ") + "...";
-      const checks = await Promise.all(sourceManifest.map(pingSource));
-      const okCount = checks.filter(check => check.ok).length;
-      const failed = checks.filter(check => !check.ok).map(check => check.source.name);
-      updateStatus.textContent = failed.length
-        ? `Kontroll tehtud: ${okCount}/${sourceManifest.length} allikat vastas.  Ei saanud ühendust: ${failed.join(", ")}. Staatiline leht ei saa reeglifaili ise ümber kirjutada, aga allikate nimekiri on valmis värskendamiseks.`
-        : `Kontroll tehtud: kõik ${sourceManifest.length} allikat küsitud. Kui allikates on muutusi, tuleb need reeglibaasi lisada ja fail uuesti salvestada.`;
-      refreshBtn.disabled = false;
     });
 
     document.addEventListener("click", event => {
