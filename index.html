@@ -1027,7 +1027,7 @@
       const okCount = checks.filter(check => check.ok).length;
       const failed = checks.filter(check => !check.ok).map(check => check.source.name);
       updateStatus.textContent = failed.length
-        ? `Kontroll tehtud: ${okCount}/${sourceManifest.length} allikat vastas. Ei saanud ühendust: ${failed.join(", ")}. Staatiline leht ei saa reeglifaili ise ümber kirjutada, aga allikate nimekiri on valmis värskendamiseks.`
+        ? `Kontroll tehtud: ${okCount}/${sourceManifest.length} allikat vastas.  Ei saanud ühendust: ${failed.join(", ")}. Staatiline leht ei saa reeglifaili ise ümber kirjutada, aga allikate nimekiri on valmis värskendamiseks.`
         : `Kontroll tehtud: kõik ${sourceManifest.length} allikat küsitud. Kui allikates on muutusi, tuleb need reeglibaasi lisada ja fail uuesti salvestada.`;
       refreshBtn.disabled = false;
     });
